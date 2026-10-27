@@ -1,214 +1,376 @@
 *This project has been created as part of the 42 curriculum by jopaz-su.*
 
-Fly-in
+# Fly-in
 
-Description
+## Description
 
-Fly-in is a drone routing simulation system developed in Python. The goal is to move a fleet of drones from a starting zone to a destination through a network of connected zones, while minimizing the total number of simulation turns.
+**Fly-in** is a drone routing and traffic simulation system developed in Python. The goal is to move a fleet of drones from a starting zone to a destination through a network of interconnected zones while minimizing the total number of simulation turns.
 
-The system parses a map file describing the network, identifies possible routes using Depth-First Search (DFS), calculates shortest paths using Dijkstra's algorithm, and simulates drone movement turn by turn while taking zone occupancy and connection capacity into account.
+The network is represented as a graph, where zones are vertices and connections are edges. Each zone and connection can have specific properties, such as movement costs, occupancy limits, and connection capacities. These constraints affect route selection and determine whether a drone can move during a given turn.
 
-Instructions
+The project combines graph traversal, shortest-path algorithms, resource management, and turn-based simulation to coordinate multiple drones efficiently.
 
-Requirements
+### Main features
 
-Python 3.10 or later
+- **Map parsing and validation:** Reads a map file defining the number of drones, zones, connections, and their metadata.
+- **Graph exploration:** Uses Depth-First Search (DFS) with backtracking to discover possible routes.
+- **Shortest-path calculation:** Implements Dijkstra's algorithm using a priority queue to find low-cost paths.
+- **Route assignment:** Selects routes for drones before the simulation begins.
+- **Turn-based simulation:** Coordinates drone movements while respecting zone occupancy, connection capacity, and zone-specific restrictions.
+- **Colored terminal output:** Uses ANSI escape codes to distinguish zone types and drone identifiers.
+- **Code quality:** Uses Python type annotations and supports linting and static type checking.
 
-GNU Make
+## Instructions
 
-Installation
+### Requirements
 
+- Python 3.10 or later.
+- GNU Make.
+- A terminal compatible with ANSI escape codes for colored output.
+
+### Installation
+
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/godsemi/Fly_in.git
+cd Fly_in
+```
+
+Install the project dependencies:
+
+```bash
 make install
+```
 
-This creates a virtual environment in .venv and installs the project dependencies.
+This command creates a virtual environment in `.venv` and installs the required dependencies.
 
-Running
+### Running the simulation
 
+Run the program with a map file:
+
+```bash
 make run MAP=<map_file>
+```
 
-Example:
+For example:
 
+```bash
 make run MAP=example.map
+```
 
-Debug mode
+Replace `example.map` with the path to your own map file.
 
-make debug MAP=<map_file>
+### Debug mode
 
-Linting
+Run the simulation in debug mode to help investigate the program's behaviour:
 
+```bash
+make debug MAP=example.map
+```
+
+### Code quality
+
+Run the standard linting checks:
+
+```bash
 make lint
+```
 
-For stricter type checking:
+For stricter static type checking:
 
+```bash
 make lint-strict
+```
 
-Cleanup
+### Cleanup
 
+Remove generated files and other artifacts handled by the Makefile:
+
+```bash
 make clean
+```
 
-Map File Format
+## Map File Format
 
-Maps describe the drone count, zones and connections that form the network.
+The map file defines the drone fleet, the zones in the network, and the connections between them.
 
+Each entry must follow the syntax expected by the parser.
+
+### Basic structure
+
+```text
 nb_drones: <number>
 start_hub: <name> <x> <y> [metadata]
 end_hub: <name> <x> <y> [metadata]
 hub: <name> <x> <y> [metadata]
 connection: <zone1>-<zone2> [metadata]
+```
 
-Zone metadata
+- `nb_drones`: Number of drones participating in the simulation.
+- `start_hub`: Starting zone, including its name and coordinates.
+- `end_hub`: Destination zone, including its name and coordinates.
+- `hub`: An intermediate zone.
+- `connection`: A connection between two zones. The network is defined by these connections.
 
-Option
+The optional metadata allows the behaviour of zones and connections to be configured.
 
-Description
+### Zone metadata
 
-zone=<type>
+| Option | Description |
+| --- | --- |
+| `zone=<type>` | Defines the zone type. |
+| `color=<value>` | Specifies the zone's display color. |
+| `max_drones=<number>` | Sets the maximum number of drones allowed in the zone. |
 
-Defines the zone type
+### Connection metadata
 
-color=<value>
+| Option | Description |
+| --- | --- |
+| `max_link_capacity=<number>` | Sets the maximum number of drones allowed on a connection simultaneously. |
 
-Defines the zone color
+### Zone types
 
-max_drones=<number>
+| Type | Description |
+| --- | --- |
+| `normal` | Standard zone with a movement cost of 1. |
+| `priority` | Preferred zone with a movement cost of 0 during pathfinding. |
+| `restricted` | Zone that requires additional transit time. |
+| `blocked` | Zone excluded from valid routes. |
 
-Sets the maximum number of drones allowed in the zone
+The parser is responsible for interpreting the map and validating its contents before the routing and simulation stages begin.
 
-Connection metadata
+## Algorithm Design and Implementation
 
-Option
+The project is organized into several stages. Each stage has a specific responsibility, separating input processing, graph algorithms, route selection, and simulation.
 
-Description
+### 1. Map parsing and validation
 
-max_link_capacity=<number>
+The parser reads the input map and extracts the drone count, start and end zones, intermediate zones, connections, and associated metadata.
 
-Sets the maximum number of drones allowed on a connection simultaneously
+The parsed information is used to construct the graph on which the routing algorithms operate. Separating parsing from pathfinding allows the algorithms to work with structured data rather than raw text.
 
-Zone types
+Invalid map data should be rejected before the simulation starts, preventing malformed input from propagating into later stages.
 
-Type
+### 2. Graph representation
 
-Description
+The network is represented as a graph:
 
-normal
+- **Vertices:** Zones that drones can occupy.
+- **Edges:** Connections through which drones can travel.
+- **Zone properties:** Movement costs, occupancy limits, and restrictions.
+- **Connection properties:** Capacity limits controlling simultaneous traffic.
 
-Standard zone with a movement cost of 1
+This representation makes it possible to explore the network, calculate routes, and enforce movement constraints during the simulation.
 
-priority
+### 3. Route discovery with Depth-First Search
 
-Preferred zone with a movement cost of 0 in pathfinding
+Depth-First Search explores the graph by following a connection to an unvisited zone and continuing until it reaches the destination or cannot proceed.
 
-restricted
+Backtracking allows the algorithm to return to previous zones and explore alternative branches.
 
-Zone that requires additional time to traverse
+Blocked zones are excluded from valid routes.
 
-blocked
+DFS is useful for discovering possible paths, but it does not guarantee the shortest or cheapest route. For that reason, route discovery and shortest-path calculation are handled as distinct algorithmic tasks.
 
-Zone excluded from valid routes
+### 4. Shortest-path calculation with Dijkstra's algorithm
 
-Algorithms
+Dijkstra's algorithm calculates a minimum-cost path through the graph using accumulated movement costs.
 
-Pathfinding
+A minimum-heap priority queue, implemented with Python's `heapq` module, selects the next zone with the lowest currently known path cost.
 
-Depth-First Search (DFS)
+The algorithm relaxes the available connections, updating the best-known cost and predecessor information whenever a cheaper path is found.
 
-DFS explores the network recursively, using backtracking to discover possible paths between the starting and destination zones. Blocked zones are excluded from valid routes.
+Movement costs depend on the destination zone type. In particular, priority zones have a cost of 0, while normal zones have a cost of 1.
 
-Dijkstra's Algorithm
+This approach avoids exploring paths in arbitrary order and provides an efficient way to determine a minimum-cost route when the configured costs are non-negative.
 
-Dijkstra calculates a shortest path based on accumulated movement costs. A minimum-heap priority queue (heapq) is used to select the next zone to explore, while movement costs depend on the destination zone type.
+### 5. Route assignment
 
-Path Assignment
+Once the available routes and their costs have been calculated, the route assignment stage determines which paths will be used by the drones.
 
-The path assignment stage calculates routes for the drones and uses their associated costs to determine route preferences.
+The objective is to choose suitable routes based on their associated costs while preparing the drones for the simulation.
 
-Simulation
+Routes are assigned before movement begins and stored in each drone's state. This avoids recalculating the same route at every simulation turn and separates route planning from movement execution.
 
-The simulation processes drone movements turn by turn. Movement validation takes zone occupancy, connection capacity and zone-specific restrictions into account.
+The selected paths still have to respect the dynamic constraints of the simulation. A valid route does not necessarily mean that a drone can traverse it immediately, since other drones may occupy zones or use connections.
 
-During each turn:
+### 6. Turn-based simulation
 
-Zone occupancy and connection usage are tracked.
+The simulation advances in discrete turns. During each turn, the program determines which drones can move to their next zones without violating the network's constraints.
 
-Each drone checks whether its next movement is valid.
+The simulation accounts for:
 
-Capacity constraints determine whether a drone can move.
+- Zone occupancy and maximum capacity.
+- Connection capacity and simultaneous traffic.
+- Zone-specific movement restrictions.
+- The current position and planned route of every drone.
+- Additional transit time associated with restricted zones.
 
-Drones release their current zones when they move, potentially allowing other drones to use those zones during the same turn.
+Zone occupancy and connection usage are tracked to prevent conflicting movements.
 
-Restricted zones require additional transit time.
+When a drone leaves a zone, that zone may become available to another drone during the same turn, depending on the simulation's movement-processing rules. This helps avoid unnecessary delays while preserving capacity constraints.
 
-Paths are assigned before the simulation starts and stored with the drone state to avoid recalculating them during every turn.
+Restricted zones require additional transit time, so entering one may affect when a drone can continue its journey.
 
-Project Structure
+The simulation continues until the drones reach the destination, subject to the program's completion and error-handling conditions.
 
+### Algorithmic strategy
+
+The implementation combines different techniques because each solves a different problem:
+
+| Technique | Purpose |
+| --- | --- |
+| Graph representation | Models zones and connections. |
+| DFS with backtracking | Explores possible routes. |
+| Dijkstra's algorithm | Calculates minimum-cost paths. |
+| `heapq` priority queue | Efficiently selects the next lowest-cost candidate. |
+| Route assignment | Prepares drone paths before simulation. |
+| Turn-based simulation | Coordinates movements and manages shared capacity constraints. |
+
+A key design decision is to separate **static planning** from **dynamic execution**. Pathfinding works with the graph and its movement costs, whereas the simulation handles changing occupancy and connection usage.
+
+This separation improves modularity and avoids repeating pathfinding calculations on every turn.
+
+## Example
+
+The following example illustrates a small network with two drones and two alternative routes.
+
+### Input
+
+Save the following as `example.map`:
+
+```text
+nb_drones: 2
+start_hub: A 0 0
+hub: B 1 0
+hub: C 1 1
+end_hub: D 2 0
+connection: A-B
+connection: B-D
+connection: A-C
+connection: C-D
+```
+
+This network contains two routes from `A` to `D`:
+
+- `A → B → D`
+- `A → C → D`
+
+Both routes contain two connections, and all zones are normal zones by default.
+
+### Execution
+
+```bash
+make run MAP=example.map
+```
+
+### Expected result
+
+Both drones should eventually reach zone `D`, provided the map is accepted by the parser and no additional constraints prevent their movements.
+
+A conceptual movement sequence could look like this:
+
+```text
+Turn 1: D1 moves A -> B
+        D2 moves A -> C
+
+Turn 2: D1 moves B -> D
+        D2 moves C -> D
+
+Result: All drones have reached the destination.
+```
+
+This is an illustrative representation of the expected behaviour, not a guaranteed literal transcript of the program's terminal output. The actual movement order and number of turns depend on the implementation's movement rules, capacity constraints, and output format.
+
+## Visual Representation
+
+Fly-in uses colored terminal output to make the network and simulation easier to understand.
+
+ANSI escape codes allow text to be displayed in different colors without requiring a graphical interface or an external rendering library.
+
+### Zone colors
+
+| Zone type | Color | Meaning |
+| --- | --- | --- |
+| `normal` | White | Standard zone. |
+| `priority` | Green | Preferred zone during pathfinding. |
+| `restricted` | Yellow | Zone with additional transit time. |
+| `blocked` | Red | Zone excluded from valid routes. |
+
+Drone identifiers are displayed in cyan to distinguish them from zone information.
+
+### How the visualization improves usability
+
+- **Faster identification:** Color coding makes it easier to distinguish zone types at a glance.
+- **Improved readability:** Drone identifiers stand out from the surrounding output.
+- **Easier debugging:** Restricted and blocked zones can be identified quickly when examining route selection and movement behaviour.
+- **Better simulation tracking:** Colored output makes the progress of the simulation easier to follow during execution.
+
+The visualization is designed for terminals that support ANSI escape codes, including typical Linux, macOS, and WSL terminals.
+
+## Project Structure
+
+```text
 Fly_in/
 ├── main.py          # Program entry point
 ├── parser.py        # Map parsing and validation
 ├── parse_raise.py   # Parsing exceptions
 ├── graph.py         # Graph representation
-├── pathfinding.py   # Pathfinding algorithms
+├── pathfinding.py   # Graph traversal and pathfinding
 ├── simulation.py    # Simulation and route assignment
 ├── drones.py        # Drone state and movement
 ├── zones.py         # Zone definitions and properties
 ├── connection.py    # Connection definitions and capacity
 ├── colour.py        # Terminal color formatting
-└── Makefile         # Project commands
+└── Makefile         # Installation, execution and quality checks
+```
 
-Technical Concepts
+### Technical concepts
 
-Graph representation and traversal
+The project applies the following programming and computer science concepts:
 
-Depth-First Search with backtracking
+- Graph theory and graph traversal.
+- Depth-First Search and backtracking.
+- Dijkstra's shortest-path algorithm.
+- Priority queues and heap-based selection.
+- Turn-based multi-agent simulation.
+- Resource and capacity management.
+- Modular programming and separation of responsibilities.
+- Python type annotations and static type checking.
 
-Dijkstra's shortest-path algorithm
+## Resources
 
-Priority queues using heapq
+The following resources provide further information about the algorithms, language features, and tools used in the project.
 
-Turn-based multi-agent simulation
+### Python documentation
 
-Resource and capacity management
+- [Python documentation](https://docs.python.org/3/) — Official reference for the Python language and standard library.
+- [`heapq` — Heap queue algorithm](https://docs.python.org/3/library/heapq.html) — Documentation for the priority queue used by Dijkstra's algorithm.
+- [Python typing](https://docs.python.org/3/library/typing.html) — Type annotations and support for static analysis.
 
-Python type annotations and static type checking
+### Algorithms and graph theory
 
-Visual Representation
+- [Dijkstra's algorithm — Wikipedia](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) — Explanation of minimum-cost pathfinding.
+- [Depth-first search — Wikipedia](https://en.wikipedia.org/wiki/Depth-first_search) — Explanation of graph exploration and backtracking.
+- [Introduction to Algorithms — MIT OpenCourseWare](https://ocw.mit.edu/) — Educational material covering algorithms and data structures.
 
-The simulation uses ANSI escape codes to display colored output in compatible terminals.
+### Code quality and terminal output
 
-Zone type
+- [PEP 257 — Docstring Conventions](https://peps.python.org/pep-0257/) — Guidelines for documenting Python modules, classes, and functions.
+- [mypy documentation](https://mypy.readthedocs.io/) — Static type checking for Python.
+- [GNU Make manual](https://www.gnu.org/software/make/manual/) — Reference for the project's build and task automation.
 
-Color
+### AI usage
 
-normal
+AI assistance was used to help structure and improve this README, including:
 
-White
+- Organizing the documentation into clear sections.
+- Improving explanations of the project's algorithms and implementation strategy.
+- Preparing illustrative examples of map input and expected simulation behaviour.
+- Improving the clarity and readability of the technical documentation.
 
-priority
+AI assistance was used for documentation drafting in this README. This description does not imply that AI generated, modified, or tested the project's source code.
 
-Green
+The implementation, algorithm behaviour, example output, and technical claims should be checked against the actual source code before submission.
 
-restricted
-
-Yellow
-
-blocked
-
-Red
-
-Drone identifiers are displayed in cyan.
-
-Supported terminals include Linux, macOS and WSL terminals with ANSI color support.
-
-Resources
-
-Python heapq documentation
-
-Dijkstra's algorithm
-
-Depth-first search
-
-ANSI escape codes
-
-PEP 257 — Docstring Conventions
-
-mypy documentation
