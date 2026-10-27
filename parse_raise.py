@@ -1,0 +1,2 @@
+class PR(Exception):
+    pass
