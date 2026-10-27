@@ -5,7 +5,7 @@ from parse_raise import PR
 
 
 def drone_parser(line: str, nb: int) -> int:
-    """parses the drones"""
+    """Parse and validate the number of drones from a line."""
     parsed = line.strip()
 
     if ":" not in parsed:
@@ -36,7 +36,7 @@ def drone_parser(line: str, nb: int) -> int:
 
 
 def metadata_parser(metadata: str, nb: int) -> dict[str, str]:
-    """parses the metadata"""
+    """Parse metadata enclosed in square brackets."""
     metadata = metadata.strip()
 
     if not metadata.startswith("[") or not metadata.endswith("]"):
@@ -80,7 +80,7 @@ def metadata_parser(metadata: str, nb: int) -> dict[str, str]:
 
 
 def zone_parser(line: str, nb: int) -> Zone:
-    """parses the zones"""
+    """Parse a zone definition and create a Zone object."""
     parsed = line.strip()
 
     if ":" not in parsed:
@@ -183,7 +183,7 @@ def zone_parser(line: str, nb: int) -> Zone:
 
 
 def connection_parser(line: str, nb: int, graph: Graph) -> None:
-    """parses the connections"""
+    """Parse a connection definition and add it to the graph."""
     parsed = line.strip()
 
     if ":" not in parsed:
@@ -270,7 +270,7 @@ def connection_parser(line: str, nb: int, graph: Graph) -> None:
 
 
 def file_parser(file: str) -> Graph:
-    """pareses the file"""
+    """Parse a map file and build the simulation graph."""
     try:
         with open(file, "r") as f:
             lines = f.readlines()

@@ -15,10 +15,12 @@ class Colours:
 
     @staticmethod
     def colouring(text: str, colour: str) -> str:
+        """Apply an ANSI colour code to a text string."""
         return f"{colour}{text}{Colours.RESET}"
 
     @staticmethod
     def colour_exit(zone: Zone) -> str:
+        """Return a zone name coloured according to its type."""
         type_zone: dict[str, str] = {
             "normal": Colours.WHITE, "priority": Colours.GREEN,
             "blocked": Colours.RED, "restricted": Colours.YELLOW
@@ -28,4 +30,5 @@ class Colours:
 
     @staticmethod
     def drone_colour(id: str) -> str:
+        """Return a zone name coloured according to its type."""
         return Colours.colouring(id, Colours.CYAN)

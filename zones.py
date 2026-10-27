@@ -2,6 +2,7 @@ from typing import Optional
 
 
 class TypeZone:
+    """Define the available zone categories in the simulation."""
 
     NORMAL = "normal"
     BLOCKED = "blocked"
@@ -21,6 +22,7 @@ class Zone:
                  is_start: bool = False,
                  is_end: bool = False
                  ) -> None:
+        """Initialize a zone with its position and properties."""
         self.name = name
         self.x = x
         self.y = y
@@ -31,6 +33,7 @@ class Zone:
         self.is_end = is_end
 
     def __repr__(self) -> str:
+        """Return a readable representation of the zone."""
         return (
             f"Zone(name={self.name}, type={self.type_zone}, "
             f"pos=({self.x},{self.y}), max_drones={self.max_drones})"

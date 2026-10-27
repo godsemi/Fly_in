@@ -7,6 +7,7 @@ from colour import Colours
 class Simulation:
 
     def __init__(self, graph: Graph) -> None:
+        """Initialize a simulation for the given graph."""
         self.graph = graph
         self.drones: list[Drone] = []
         self.current_turn: int = 0
@@ -14,6 +15,7 @@ class Simulation:
 
     @staticmethod
     def path_cost(graph: Graph, path: list[str]) -> float:
+        """Calculate the total traversal cost of a path."""
         costs: dict[str, float] = {
             "normal": 1, "restricted": 2, "priority": 0,
             "blocked": float('inf')
@@ -26,6 +28,7 @@ class Simulation:
         return total
 
     def assign_path(self) -> None:
+        """Assign paths to all drones in the simulation."""
         all_paths = find_paths(
             self.graph, self.graph.start, self.graph.end
         )
@@ -38,6 +41,7 @@ class Simulation:
 
     def mov_validator(self, drone: Drone, occupied_zone: dict[str, int],
                       connection_use: dict[tuple[str, str], int]) -> bool:
+        """Check whether a drone can move to its next zone."""
         next_zone_name = drone.get_next_zone
         if next_zone_name is None:
             return False
@@ -63,6 +67,7 @@ class Simulation:
         return True
 
     def simulate_turn(self) -> list[str]:
+        """Simulate one turn and update drone movements."""
         movement: list[str] = []
         occupied_zone: dict[str, int] = {
             zone_name: sum(1 for d in self.drones
@@ -104,6 +109,8 @@ class Simulation:
             return movement
 
     def loop_turn(self) -> int:
+        """Run simulation turns until all drones finish or the
+        maximum turn limit is exceeded."""
         turns = len(self.drones) * len(self.graph.zones) * 10
         while any(not drone.has_finished for drone in self.drones):
             self.simulate_turn()

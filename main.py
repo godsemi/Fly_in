@@ -5,6 +5,7 @@ import sys
 
 
 def main():
+    """Run the drone simulation from a map file."""
     try:
         if len(sys.argv) != 2:
             print("Usage: python3 main.py <map_file>")

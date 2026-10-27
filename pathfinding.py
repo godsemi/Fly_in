@@ -8,7 +8,7 @@ def search_paths(
         graph: Graph, current: str, end: str, viewed: set[str],
         path: list[str], all: list[list[str]]
         ) -> None:
-    """searches the paths"""
+    """Recursively find all valid paths between two zones."""
 
     if current == end:
         all.append(list(path))
@@ -27,6 +27,7 @@ def search_paths(
 
 
 def find_paths(graph: Graph, start: Zone, end: Zone) -> list[list[str]]:
+    """Find all valid paths between a start zone and an end zone."""
     all_paths: list[list[str]] = []
     search_paths(graph, start.name, end.name,
                  {start.name}, [start.name], all_paths)
@@ -34,6 +35,9 @@ def find_paths(graph: Graph, start: Zone, end: Zone) -> list[list[str]]:
 
 
 def algorithm(graph: Graph, start: Zone, end: Zone) -> list[str]:
+    """Find the lowest-cost path using Dijkstra's algorithm.
+    Each zone type has a different traversal cost. Blocked zones
+    are excluded, while priority zones have zero traversal cost."""
     costs: dict[str, float] = {"normal": 1, "restricted": 2,
                                "priority": 0, "blocked": float('inf')}
     zone_cost: dict[str, float] = {start.name: 0}
